@@ -13,11 +13,15 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log('MongoDB connection error:', err));
 
-  
+// Middleware để parse JSON  
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.json('Assignment 3: API CRUD WITH SPECIFICATION');
+});
+
 // Sử dụng route cho API sinh viên
-app.use('/api', studentRoutes);
+app.use('/', studentRoutes);
 
 // Khởi động server
 app.listen(PORT, () => {

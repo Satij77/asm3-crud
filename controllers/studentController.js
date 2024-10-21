@@ -14,11 +14,17 @@ exports.getInfo = (req, res) => {
 exports.getStudents = async (req, res) => {
   try {
     const students = await Student.find();
-    res.json({ success: true, data: students });
+    const result = students.map(student => {
+      const studentObj = student.toObject();
+      delete studentObj.__v; // Xóa trường __v
+      return studentObj;
+    });
+    res.json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
 
 // Tạo sinh viên mới
 exports.createStudent = async (req, res) => {
@@ -26,7 +32,17 @@ exports.createStudent = async (req, res) => {
   try {
     const newStudent = new Student({ fullName, studentCode, isActive });
     await newStudent.save();
-    res.status(201).json({ success: true, message: 'Student created successfully', data: newStudent });
+    // Trả về kết quả theo định dạng yêu cầu
+    res.status(201).json({
+      success: true,
+      message: 'Student created successfully',
+      data: {
+        _id: newStudent._id,
+        name: newStudent.fullName, // Đổi tên trường thành "name"
+        studentCode: newStudent.studentCode,
+        isActive: newStudent.isActive
+      }
+    });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -72,6 +88,11 @@ exports.deleteStudent = async (req, res) => {
     }
     res.json({ success: true, message: 'Student deleted successfully' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    // Kiểm tra nếu lỗi là do ID không hợp lệ
+    if (error.kind === 'ObjectId') {
+      return res.status(400).json({ success: false, message: 'Invalid student ID format' });
+    }
+    // Trả về lỗi 500 cho các lỗi khác
+    res.status(500).json({ success: false, message: 'Something went wrong on the server' });
   }
 };
